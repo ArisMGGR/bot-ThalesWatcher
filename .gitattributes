@@ -1,0 +1,7 @@
+# Shell scripts run on Linux (bash, systemd): always check them out with LF
+# line endings - with Windows CRLF endings bash fails with errors like
+# "set: pipefail: invalid option name".
+*.sh text eol=lf
+# Python files with a shebang (auto_setup.py, auto_uninstall.py) fail the same
+# way when run directly (./auto_setup.py): "env: 'python3\r': ...".
+*.py text eol=lf
