@@ -5,7 +5,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 
-from General_Items.connection_const import HEADERS,CAS_ENTRY,ECLASS_USER,ECLASS_PASS,ROOT
+from General_Items.connection_const import HEADERS,CAS_ENTRY,ECLASS_USER,ECLASS_PASS,ROOT,CA_BUNDLE
 
 # Always in the project folder (where .gitignore and ownership.give_back expect
 # it), whatever directory the bot was started from.
@@ -23,6 +23,11 @@ def build_session():
     """
     s = requests.Session()
     s.headers.update(HEADERS)
+    # Checked on every scan, not just at start-up, so a bundle built while the
+    # service runs (install-certs.sh by hand) is used. A REQUESTS_CA_BUNDLE in
+    # the environment still takes precedence, as in connection_const.
+    if CA_BUNDLE.is_file():
+        s.verify = str(CA_BUNDLE)
     retry = Retry(
         total=4,
         connect=4,             # covers DNS resolution / connection failures
