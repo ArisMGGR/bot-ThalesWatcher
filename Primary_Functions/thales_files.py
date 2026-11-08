@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import re
 import time
 from urllib.parse import urljoin

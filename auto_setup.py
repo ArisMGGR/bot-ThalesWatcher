@@ -569,21 +569,26 @@ def as_root(cmd):
 
 
 def setup_service(python):
-    """Install the always-on thales-bot.service. True if it's installed."""
+    """Install the always-on thales-bot.service.
+
+    Returns (installed, restarted): whether the service is installed, and
+    whether it was (re)started just now with the new settings.
+    """
     section("6/7  Service")
     if not shutil.which("systemctl") or not pathlib.Path("/run/systemd/system").is_dir():
         print("Skipping: this system isn't running systemd.")
-        return False
+        return False, False
     print("The bot runs as the always-on, system-wide thales-bot.service (as the\n"
           "owner of this folder): it scans on your schedule and answers chat\n"
           "commands. It starts at boot and restarts itself if it ever stops.\n"
           "Installing it needs sudo.")
     if not confirm("Install (or update) and (re)start the service?", default=True):
-        return SERVICE_UNIT.is_file()
+        return SERVICE_UNIT.is_file(), False
     cmd = as_root(["env", f"PYTHON={python}", "bash", str(ROOT / "install-service.sh")])
-    if run(cmd).returncode != 0:
+    restarted = run(cmd).returncode == 0
+    if not restarted:
         print("install-service.sh failed - see the output above.")
-    return SERVICE_UNIT.is_file()
+    return SERVICE_UNIT.is_file(), restarted
 
 
 # --- step 7: first run -----------------------------------------------------------------
@@ -623,10 +628,15 @@ def watch_startup(mark, timeout=30):
     return any(marker in line for line in shown for marker in READY_MARKERS[:2])
 
 
-def first_run(python, service, platform, mark):
+def first_run(python, service, restarted, platform, mark):
     section("7/7  First run")
     if not CA_BUNDLE.is_file():
         print(CERT_WARNING)
+    if service and not restarted:
+        print("The service wasn't restarted, so it keeps running with its previous\n"
+              "settings. Apply the new ones with:\n"
+              "  sudo systemctl restart thales-bot.service")
+        return
     if service:
         # install-service.sh has just (re)started the service; it scans right
         # away if the current schedule slot hasn't been scanned yet.
@@ -696,8 +706,8 @@ def main():
         setup_certs()
         cfg = setup_config(python)  # write_env hands its files back before the service starts
         mark = log_mark()  # before install-service.sh restarts the service
-        service = setup_service(python)
-        first_run(python, service, cfg["NOTIFY_PLATFORM"], mark)
+        service, restarted = setup_service(python)
+        first_run(python, service, restarted, cfg["NOTIFY_PLATFORM"], mark)
     finally:
         hand_back()  # also when setup stops part-way (e.g. after creating the venv)
     section("Done")

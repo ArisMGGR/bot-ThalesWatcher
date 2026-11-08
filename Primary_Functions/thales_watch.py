@@ -1,11 +1,11 @@
-#!/usr/bin/env python3
 """
-thales_watch.py - watcher for the CS-UniPi Open eClass portal (thales.cs.unipi.gr),
-authenticating through the University of Piraeus CAS single sign-on (sso.unipi.gr).
+thales_watch.py - announcements watcher for the CS-UniPi Open eClass portal
+(thales.cs.unipi.gr), authenticating through the University of Piraeus CAS
+single sign-on (sso.unipi.gr).
 
-Logs in via CAS, reads your personal portfolio page, and pings you on Telegram or Discord
-whenever a new announcement - course item - exercise
-Built to run on a schedule
+Logs in via CAS, reads your announcements from all courses, and pings you on
+Telegram or Discord whenever a new one appears. Not run directly: every scan
+(General_Functions/scan.py) calls it with the files and exercises watchers.
 """
 import sys
 import hashlib
